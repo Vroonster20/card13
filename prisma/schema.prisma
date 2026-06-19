@@ -21,7 +21,7 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  //url       = env("postgresql://neondb_owner:npg_ckfpIKvZ5nm4@ep-weathered-bread-aqs5sp4u-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+  url       = env("postgresql://neondb_owner:npg_ckfpIKvZ5nm4@ep-weathered-bread-aqs5sp4u-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
   //directUrl = env("postgresql://neondb_owner:npg_ckfpIKvZ5nm4@ep-weathered-bread-aqs5sp4u.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
 }
 

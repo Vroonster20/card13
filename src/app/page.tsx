@@ -2,13 +2,13 @@
 // src/app/page.tsx — Landing Page
 // ─────────────────────────────────────────────
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
+//import { auth } from '@/lib/auth';
+//import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export default async function HomePage() {
-  const session = await auth();
-  if (session?.user) redirect('/dashboard');
+  //const session = await auth();
+  //if (session?.user) redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 flex flex-col items-center justify-center p-6 text-center">

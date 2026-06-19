@@ -1,8 +1,9 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Geist } from 'next/font/google';
-import { SessionProvider } from 'next-auth/react';
-import { ThemeProvider } from 'next-themes';
+//import { SessionProvider } from 'next-auth/react';
+//import { ThemeProvider } from 'next-themes';
+import { Providers } from "@/components/providers";
 //import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { cn } from "@/lib/utils";
@@ -20,12 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <SessionProvider>
-            {children}
-            {/* <Toaster /> */}
-          </SessionProvider>
-        </ThemeProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

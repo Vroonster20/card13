@@ -1,6 +1,10 @@
 // ─────────────────────────────────────────────
 // src/components/auth/RegisterForm.tsx
 // ─────────────────────────────────────────────
+"use client";
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export function RegisterForm() {
   const router = useRouter();
