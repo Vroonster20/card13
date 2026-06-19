@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export default async function StatsPage() {
   const session = await auth();

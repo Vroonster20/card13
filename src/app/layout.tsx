@@ -1,8 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Geist } from 'next/font/google';
-//import { SessionProvider } from 'next-auth/react';
-//import { ThemeProvider } from 'next-themes';
 import { Providers } from "@/components/providers";
 //import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
