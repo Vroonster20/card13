@@ -26,8 +26,8 @@ const SUIT_SYMBOL: Record<string, string> = {
 const SUIT_COLOR: Record<string, string> = {
   hearts: 'text-red-500',
   diamonds: 'text-red-500',
-  clubs: 'text-gray-900 dark:text-gray-100',
-  spades: 'text-gray-900 dark:text-gray-100',
+  clubs: 'text-black',
+  spades: 'text-black',
 };
 
 export function CardComponent({

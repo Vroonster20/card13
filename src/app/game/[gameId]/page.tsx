@@ -9,5 +9,7 @@ export default async function GamePage({ params }: { params: { gameId: string } 
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  return <GameBoard gameId={params.gameId} />;
+  const { gameId } = await params;
+
+  return <GameBoard gameId={gameId} />;
 }

@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 import { LobbyRoom } from '@/components/lobby/LobbyRoom';
 
-export default function LobbyCodePage({ params }: { params: { code: string } }) {
-  return <LobbyRoom lobbyCode={params.code} />;
+export default async function LobbyCodePage({ params }: { params: { code: string } }) {
+  const { code } = await params;
+  return <LobbyRoom lobbyCode={code} />;
 }
