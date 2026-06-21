@@ -614,7 +614,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
         if (gameState) {
           const player = gameState.players.find(p => p.userId === info.userId);
           if (player) {
-            player.isConnected = false;
+            //player.isConnected = false;
             broadcastGameState(io, gameState);
           }
         }

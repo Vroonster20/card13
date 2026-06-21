@@ -26,6 +26,10 @@ export function useSocket() {
     const s = getSocket();
     socketRef.current = s;
 
+    s.on('connect', () => {
+      console.log('[Socket] Connected:', s.id);
+    });
+
     if (!s.connected) s.connect();
 
     s.on('lobby:updated', ({ lobby }) => {

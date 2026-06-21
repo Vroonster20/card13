@@ -49,6 +49,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const userId = session?.user?.id ?? '';
 
   const { gameState, roundEnded, gameEnded, error } = useGameStore();
+  const lobbyState = useGameStore(state => state.lobbyState);
   const socket = useSocket();
 
   const [localHand, setLocalHand] = useState<Card[]>([]);
@@ -64,7 +65,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   // Connect socket on mount
   useEffect(() => {
     socket.connect();
-    socket.reconnect(/* lobbyCode */ '', userId); // lobbyCode fetched from URL/store
+    socket.reconnect(lobbyState?.code ?? '', userId); // lobbyCode fetched from URL/store
     return () => socket.disconnect();
   }, []);
 
