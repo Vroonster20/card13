@@ -116,6 +116,8 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const handleDrawDeck = () => socket.drawFromDeck(gameId, userId);
   const handleDrawDiscard = () => socket.drawFromDiscard(gameId, userId);
   const handleDiscard = (cardId: string) => socket.discardCard(gameId, userId, cardId);
+  const handleKnock = () => {socket.knock(gameId, userId);};
+  const handleEndTurn = () => {socket.endTurn(gameId, userId);};
 
   if (!gameState) {
     return (
@@ -145,6 +147,12 @@ export function GameBoard({ gameId }: GameBoardProps) {
         />
         <ScoreBoard players={gameState.players} scores={gameState.cumulativeScores} />
       </div>
+
+      {gameState?.isFinalTurnPhase && (
+        <div className="bg-yellow-700 text-white p-3 rounded mb-4">
+          Final Turns Active
+        </div>
+      )} 
 
       {/* Other Players */}
       <div className="flex justify-center gap-8 py-4 px-4 flex-wrap">
@@ -227,6 +235,18 @@ export function GameBoard({ gameId }: GameBoardProps) {
               <Wand2 className="w-4 h-4 mr-1" />
               Highlight Groups
             </Button>
+            <Button
+              onClick={handleKnock}
+              disabled={gameState?.currentTurnUserId !== userId || !gameState.hasDiscardedThisTurn}
+            >
+              Knock
+            </Button>
+            <Button
+              onClick={handleEndTurn}
+              disabled={gameState?.currentTurnUserId !== userId || !gameState.hasDiscardedThisTurn}
+            >
+              End Turn
+            </Button>
           </div>
           <div className="text-sm text-green-300">
             {isMyTurn
@@ -296,7 +316,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
             onClose={() => router.push('/dashboard')}
           />
         )}
-      </AnimatePresence>
+      </AnimatePresence> 
     </div>
   );
 }

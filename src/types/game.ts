@@ -57,6 +57,10 @@ export interface ServerGameState {
   roundHistory: RoundState[];
   turnOrder: string[];     // userId[] in seat order
   hasDrewThisTurn: boolean; // drawn a card this turn?
+  hasDiscardedThisTurn: boolean; // discarded a card this turn?
+  knockedBy?: string;
+  isFinalTurnPhase: boolean;
+  remainingFinalTurns: string[];
 }
 
 export interface ServerPlayer {
@@ -114,6 +118,8 @@ export interface ClientGameState {
   status: 'in_progress' | 'completed';
   currentRound: RoundState;
   currentTurnUserId: string;
+  knockedBy?: string;
+  isFinalTurnPhase: boolean;
   players: ClientPlayer[];     // hands are stripped to handCount for opponents
   myHand: Card[];              // only the requesting player's hand
   discardPile: Card[];
@@ -121,6 +127,7 @@ export interface ClientGameState {
   cumulativeScores: Record<string, number>;
   roundHistory: RoundState[];
   hasDrewThisTurn: boolean;
+  hasDiscardedThisTurn: boolean;
   winner?: string;
 }
 

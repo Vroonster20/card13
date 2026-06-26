@@ -114,6 +114,14 @@ export function useSocket() {
     socketRef.current?.emit('game:arrange_hand', { gameId, userId, hand });
   }, []);
 
+  const endTurn = useCallback((gameId: string, userId: string) => {
+    socketRef.current?.emit('game:end_turn', { gameId, userId });
+  }, []);
+
+  const knock = useCallback((gameId: string, userId: string) => {
+    socketRef.current?.emit('game:knock', { gameId, userId });
+  }, []);
+
   return {
     connect,
     disconnect,
@@ -126,5 +134,7 @@ export function useSocket() {
     drawFromDiscard,
     discardCard,
     arrangeHand,
+    endTurn,
+    knock,
   };
 }
