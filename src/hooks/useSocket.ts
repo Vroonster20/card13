@@ -45,6 +45,7 @@ export function useSocket() {
     });
 
     s.on('game:state', ({ gameState }) => {
+      useGameStore.getState().clearRoundEnded();
       setGameState(gameState);
     });
 

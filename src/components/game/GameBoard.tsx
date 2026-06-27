@@ -48,7 +48,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const router = useRouter();
   const userId = session?.user?.id ?? '';
 
-  const { gameState, roundEnded, gameEnded, error } = useGameStore();
+  const { gameState, roundEnded, gameEnded, error, setError } = useGameStore();
   const lobbyState = useGameStore(state => state.lobbyState);
   const socket = useSocket();
 
@@ -72,12 +72,29 @@ export function GameBoard({ gameId }: GameBoardProps) {
   // Sync hand from server state
   useEffect(() => {
     if (gameState?.myHand) {
-      const wild = gameState.currentRound.wildRank;
-      const markedHand = markWilds(gameState.myHand, wild);
-      setLocalHand(markedHand);
-      detectGroups(markedHand, wild);
+        const markedHand = markWilds(
+            gameState.myHand,
+            gameState.currentRound.wildRank
+        );
+
+        setLocalHand(markedHand);
+        detectGroups(markedHand, gameState.currentRound.wildRank);
     }
-  }, [gameState?.myHand]);
+  }, [
+      gameState?.myHand,
+      gameState?.currentRound.wildRank,
+  ]);
+
+  // Make errors disappear after 3 seconds
+  useEffect(() => {
+    if (!error) return;
+
+    const timer = setTimeout(() => {
+      setError(null);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [error, setError]);
 
   const detectGroups = useCallback((hand: Card[], wildRank: string) => {
     const marked = markWilds(hand, wildRank as any);
@@ -202,10 +219,10 @@ export function GameBoard({ gameId }: GameBoardProps) {
       <AnimatePresence>
         {error && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-36 left-1/2 -translate-x-1/2 bg-red-900 text-red-100 px-4 py-2 rounded-lg text-sm shadow-lg"
+            exit={{ opacity: 0, y: 25 }}
+            className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-red-900 text-red-100 px-4 py-2 rounded-lg text-sm shadow-lg"
           >
             {error}
           </motion.div>

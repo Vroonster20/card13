@@ -4,6 +4,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { CardComponent } from './CardComponent';
 import type { Card, Rank } from '@/types/game';
+import { useGameStore } from '@/store/gameStore';
 
 interface DiscardPileProps {
   topCard: Card | null;
@@ -12,6 +13,7 @@ interface DiscardPileProps {
 }
 
 export function DiscardPile({ topCard, canDraw, onDraw }: DiscardPileProps) {
+  const { gameState } = useGameStore();
   return (
     <motion.div className="flex flex-col items-center gap-2">
       <button
@@ -32,7 +34,7 @@ export function DiscardPile({ topCard, canDraw, onDraw }: DiscardPileProps) {
                 isInGroup={false}
                 canDiscard={false}
                 onDiscard={() => {}}
-                wildRank={'3'}
+                wildRank={gameState!.currentRound.wildRank}
               />
             </motion.div>
           ) : (

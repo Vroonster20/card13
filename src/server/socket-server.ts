@@ -579,7 +579,6 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
 
       const [discarded] = player.hand.splice(cardIdx, 1);
       gameState.discardPile.push(discarded);
-      gameState.hasDrewThisTurn = false;
       gameState.hasDiscardedThisTurn = true;
 
       broadcastGameState(io, gameState);
@@ -591,7 +590,6 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       const gameState = gameStates.get(gameId);
       if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
       if (gameState.currentTurnUserId !== userId) return socket.emit('game:error', { message: 'Not your turn' });
-      if (gameState.hasDrewThisTurn) return socket.emit('game:error', { message: 'Already drew this turn' });
       if (!gameState.hasDiscardedThisTurn) return socket.emit('game:error', { message: 'Must discard before ending turn' });
 
       // Advance turn
@@ -600,11 +598,13 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
         gameState.remainingFinalTurns = gameState.remainingFinalTurns.filter(id => id !== userId);
         
         if (gameState.remainingFinalTurns.length === 0) {
+          gameState.hasDiscardedThisTurn = false;
           await handleRoundEnd(io, gameState);
           return;
         }
       }
-      
+
+      gameState.hasDrewThisTurn = false;
       gameState.hasDiscardedThisTurn = false;
       gameState.currentTurnUserId = nextTurn(gameState);
 
@@ -615,7 +615,6 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       const gameState = gameStates.get(gameId);
       if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
       if (gameState.currentTurnUserId !== userId) return socket.emit('game:error', { message: 'Not your turn' });
-      if (gameState.hasDrewThisTurn) return socket.emit('game:error', { message: 'Already drew this turn' });
       if (!gameState.hasDiscardedThisTurn) return socket.emit('game:error', { message: 'Must discard before knocking' });
       if (gameState.isFinalTurnPhase) return socket.emit('game:error', { message: 'Someone already knocked' });
 
@@ -629,6 +628,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       console.log('FINAL TURNS:', gameState.remainingFinalTurns);
 
       // Advance turn
+      gameState.hasDrewThisTurn = false;
       gameState.hasDiscardedThisTurn = false;
       gameState.currentTurnUserId = nextTurn(gameState);
 
@@ -742,6 +742,10 @@ async function handleRoundEnd(io: SocketIOServer, gameState: ServerGameState) {
 
     broadcastGameState(io, gameState);
   }, 5000); // 5s delay to show scores
+
+  gameState.isFinalTurnPhase = false;
+  gameState.knockedBy = undefined;
+  gameState.remainingFinalTurns = [];
 }
 
 async function handleGameEnd(io: SocketIOServer, gameState: ServerGameState) {
