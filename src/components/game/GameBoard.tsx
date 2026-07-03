@@ -38,9 +38,15 @@ import type { Card, CardGroup } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2, SortAsc } from 'lucide-react';
+import GroupDropZone from './GroupDropZone';
 
 interface GameBoardProps {
   gameId: string;
+}
+
+interface GroupedCard extends Card {
+  location: 'hand' | 'group';
+  groupId?: number;
 }
 
 export function GameBoard({ gameId }: GameBoardProps) {
@@ -54,13 +60,18 @@ export function GameBoard({ gameId }: GameBoardProps) {
 
   const [localHand, setLocalHand] = useState<Card[]>([]);
   const [activeCard, setActiveCard] = useState<Card | null>(null);
-  const [detectedGroups, setDetectedGroups] = useState<CardGroup[]>([]);
+  const [cards, setCards] = useState<GroupedCard[]>([]);
+
+  const [detectedGroups, setDetectedGroups] = useState<CardGroup[]>([]); //This is for determining runs, not related to grouping.
   const [autoSort, setAutoSort] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const handCards = cards.filter(c => c.location === 'hand');
+  const groupCards = cards.filter(c => c.location === 'group' && c.groupId === undefined);
 
   // Connect socket on mount
   useEffect(() => {
@@ -108,9 +119,32 @@ export function GameBoard({ gameId }: GameBoardProps) {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+
     setActiveCard(null);
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+
+    if (!over) {
+      console.log('Dropped outside any drop zone');
+      return;
+    }
+
+    if (typeof over.id === 'string' && over.id.startsWith('group-')) {
+      const groupId = Number(over.id.replace('group-', ''));
+
+      const draggedCard = localHand.find(c => c.id === active.id);
+      if (!draggedCard) return;
+
+      const updatedHand = localHand.filter(c => c.id !== active.id);
+      setLocalHand(updatedHand);
+
+      setGroups(prev => prev.map(group => group.id === groupId ? { ...group, cards: [...group.cards, draggedCard] } : group));
+
+      alert(localHand.map(card => ({id: card?.id, rank: card?.rank,})));
+
+      return;
+    }
+
+    if (active.id === over.id) return;
 
     const oldIdx = localHand.findIndex(c => c.id === active.id);
     const newIdx = localHand.findIndex(c => c.id === over.id);
@@ -148,6 +182,21 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const canDraw = isMyTurn && !gameState.hasDrewThisTurn;
   const canDiscard = isMyTurn && gameState.hasDrewThisTurn;
   const wildRank = gameState.currentRound.wildRank;
+
+  const [isManagingGroups, setIsManagingGroups] = useState(false);
+  const handleToggle = () => setIsManagingGroups(prev => !prev);
+
+  const [groups, setGroups] = useState<{ id: number; cards: any[] }[]>([]);
+  const handleAddGroup = () => {
+    if (groups.length >= 4) return; // Limit to 4 groups
+
+    setGroups([...groups, {id: groups.length + 1, cards: []}]);
+  };
+  const handleDeleteGroup = () => {
+    if (groups.length === 0) return; // No groups to delete
+
+    setGroups(groups.slice(0, -1));
+  };
 
   const cardInGroup = (card: Card) =>
     detectedGroups.some(g => g.cards.some(c => c.id === card.id));
@@ -234,24 +283,9 @@ export function GameBoard({ gameId }: GameBoardProps) {
         {/* Hand Controls */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAutoSort}
-              className="text-green-100 border-green-600 hover:bg-green-800"
-            >
-              <SortAsc className="w-4 h-4 mr-1" />
-              Auto Sort
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setAutoSort(a => !a)}
-              className={`text-green-100 border-green-600 ${autoSort ? 'bg-green-700' : 'hover:bg-green-800'}`}
-            >
-              <Wand2 className="w-4 h-4 mr-1" />
-              Highlight Groups
-            </Button>
+            {/* I deleted Auto Sort and Highlight Groups buttons, yet 
+                their functionality may be useful in the future.
+                Auto Sort called handleAutoSort, Highlight Groups toggled autoSort state */}
             <Button
               onClick={handleKnock}
               disabled={gameState?.currentTurnUserId !== userId || !gameState.hasDiscardedThisTurn}
@@ -264,6 +298,33 @@ export function GameBoard({ gameId }: GameBoardProps) {
             >
               End Turn
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggle}
+              className={`text-green-100 border-green-600 ${autoSort ? 'bg-green-700' : 'hover:bg-green-800'}`}
+            >
+              <Wand2 className="w-4 h-4 mr-1" />
+              {isManagingGroups ? 'Close Grouping' : 'Manage Grouping'}
+            </Button>
+            {isManagingGroups && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAddGroup}
+              className={`text-green-100 border-green-600 ${autoSort ? 'bg-green-700' : 'hover:bg-green-800'}`}
+            >
+              + Add Group
+            </Button>)}
+            {isManagingGroups && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDeleteGroup}
+              className={`text-green-100 border-green-600 ${autoSort ? 'bg-green-700' : 'hover:bg-green-800'}`}
+            >
+              - Delete Group
+            </Button>)}
           </div>
           <div className="text-sm text-green-300">
             {isMyTurn
@@ -274,15 +335,48 @@ export function GameBoard({ gameId }: GameBoardProps) {
           </div>
         </div>
 
-        {/* Draggable Hand */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
+
+        {/* Groups */}
+        {isManagingGroups && (
+          <div className="mt-4 mb-6 flex justify-center gap-3">
+            {groups.map(group => (
+              <GroupDropZone
+                key={group.id}
+                id={`group-${group.id}`}
+                title={`Group ${group.id}`}
+              >
+                {group.cards.length === 0 ? (
+                  <div className="mt-2 text-green-400 text-sm">
+                    Drag here
+                  </div>
+                ) : (
+                  <div className="flex gap-1 justify-center flex-wrap min-h-24">
+                    {group.cards.map(card => (
+                      <CardComponent
+                        key={card.id}
+                        card={card}
+                        isInGroup={true}
+                        canDiscard={canDiscard}
+                        onDiscard={handleDiscard}
+                        wildRank={wildRank}
+                    />
+                  ))}
+                  </div>
+                )}
+              </GroupDropZone>
+            ))}
+          </div>
+        )}
+
+        {/* Draggable Hand */}
           <SortableContext
-            items={localHand.map(c => c.id)}
+            items={localHand}
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-1 justify-center flex-wrap min-h-24">
