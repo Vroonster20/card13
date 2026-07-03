@@ -58,7 +58,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const lobbyState = useGameStore(state => state.lobbyState);
   const socket = useSocket();
 
-  const [localHand, setLocalHand] = useState<Card[]>([]);
+  //const [localHand, setLocalHand] = useState<Card[]>([]);
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [cards, setCards] = useState<GroupedCard[]>([]); //this is new
 
@@ -135,35 +135,36 @@ export function GameBoard({ gameId }: GameBoardProps) {
       const draggedCard = cards.find(c => c.id === active.id);
       if (!draggedCard) return;
 
-      const updatedHand = localHand.filter(c => c.id !== active.id);
-      setLocalHand(updatedHand);
-
-      setGroups(prev => prev.map(group => group.id === groupId ? { ...group, cards: [...group.cards, draggedCard] } : group));
-
-      alert(localHand.map(card => ({id: card?.id, rank: card?.rank,})));
+      const updatedHand = cards.map(card => {
+        if (card.id === draggedCard.id) {
+          return { ...card, location: 'group' as const, groupId };
+        }
+        return card;
+      });
+      setCards(updatedHand);
 
       return;
     }
 
     if (active.id === over.id) return;
 
-    const oldIdx = localHand.findIndex(c => c.id === active.id);
-    const newIdx = localHand.findIndex(c => c.id === over.id);
-    const newHand = arrayMove(localHand, oldIdx, newIdx);
+    const oldIdx = cards.findIndex(c => c.id === active.id);
+    const newIdx = cards.findIndex(c => c.id === over.id);
+    const newHand = arrayMove(cards, oldIdx, newIdx);
 
-    setLocalHand(newHand);
+    setCards(newHand);
     socket.arrangeHand(gameId, userId, newHand);
   };
 
-  const handleAutoSort = () => {
-    if (!gameState) return;
-    const wild = gameState.currentRound.wildRank;
-    const marked = markWilds(localHand, wild);
-    const { groups, ungrouped } = findBestArrangement(marked);
-    const sorted = [...groups.flatMap(g => g.cards), ...ungrouped];
-    setLocalHand(sorted);
-    socket.arrangeHand(gameId, userId, sorted);
-  };
+  // const handleAutoSort = () => {
+  //   if (!gameState) return;
+  //   const wild = gameState.currentRound.wildRank;
+  //   const marked = markWilds(localHand, wild);
+  //   const { groups, ungrouped } = findBestArrangement(marked);
+  //   const sorted = [...groups.flatMap(g => g.cards), ...ungrouped];
+  //   setLocalHand(sorted);
+  //   socket.arrangeHand(gameId, userId, sorted);
+  // };
 
   const handleDrawDeck = () => socket.drawFromDeck(gameId, userId);
   const handleDrawDiscard = () => socket.drawFromDiscard(gameId, userId);
@@ -187,11 +188,11 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const [isManagingGroups, setIsManagingGroups] = useState(false);
   const handleToggle = () => setIsManagingGroups(prev => !prev);
 
-  const [groups, setGroups] = useState<{ id: number; cards: any[] }[]>([]); //this is new
+  const [groups, setGroups] = useState<{ id: number}[]>([]); //this is new
   const handleAddGroup = () => {
     if (groups.length >= 4) return; // Limit to 4 groups
 
-    setGroups([...groups, {id: groups.length + 1, cards: []}]);
+    setGroups([...groups, {id: groups.length + 1}]);
   };
   const handleDeleteGroup = () => {
     if (groups.length === 0) return; // No groups to delete
@@ -199,7 +200,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
     setGroups(groups.slice(0, -1));
   };
 
-  const cardInGroup = (card: Card) =>
+  const cardInGroup = (card: Card) => // this is for the game determining runs
     detectedGroups.some(g => g.cards.some(c => c.id === card.id));
 
   return (
@@ -352,7 +353,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
                 id={`group-${group.id}`}
                 title={`Group ${group.id}`}
               >
-                {group.cards.length === 0 ? (
+                {cards.filter(c => c.groupId === group.id).length === 0 ? (
                   <div className="mt-2 text-green-400 text-sm">
                     Drag here
                   </div>
@@ -377,7 +378,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
 
         {/* Draggable Hand */}
           <SortableContext
-            items={localHand}
+            items={cards}
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-1 justify-center flex-wrap min-h-24">
