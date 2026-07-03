@@ -60,7 +60,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
 
   const [localHand, setLocalHand] = useState<Card[]>([]);
   const [activeCard, setActiveCard] = useState<Card | null>(null);
-  const [cards, setCards] = useState<GroupedCard[]>([]);
+  const [cards, setCards] = useState<GroupedCard[]>([]); //this is new
 
   const [detectedGroups, setDetectedGroups] = useState<CardGroup[]>([]); //This is for determining runs, not related to grouping.
   const [autoSort, setAutoSort] = useState(false);
@@ -88,7 +88,8 @@ export function GameBoard({ gameId }: GameBoardProps) {
             gameState.currentRound.wildRank
         );
 
-        setLocalHand(markedHand);
+        //setLocalHand(markedHand);
+        setCards(markedHand.map(card => ({ ...card, location: 'hand', groupId: undefined })));
         detectGroups(markedHand, gameState.currentRound.wildRank);
     }
   }, [
@@ -114,7 +115,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const card = localHand.find(c => c.id === event.active.id);
+    const card = cards.find(c => c.id === event.active.id);
     setActiveCard(card ?? null);
   };
 
@@ -131,7 +132,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
     if (typeof over.id === 'string' && over.id.startsWith('group-')) {
       const groupId = Number(over.id.replace('group-', ''));
 
-      const draggedCard = localHand.find(c => c.id === active.id);
+      const draggedCard = cards.find(c => c.id === active.id);
       if (!draggedCard) return;
 
       const updatedHand = localHand.filter(c => c.id !== active.id);
@@ -186,7 +187,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const [isManagingGroups, setIsManagingGroups] = useState(false);
   const handleToggle = () => setIsManagingGroups(prev => !prev);
 
-  const [groups, setGroups] = useState<{ id: number; cards: any[] }[]>([]);
+  const [groups, setGroups] = useState<{ id: number; cards: any[] }[]>([]); //this is new
   const handleAddGroup = () => {
     if (groups.length >= 4) return; // Limit to 4 groups
 
@@ -357,7 +358,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
                   </div>
                 ) : (
                   <div className="flex gap-1 justify-center flex-wrap min-h-24">
-                    {group.cards.map(card => (
+                    {cards.filter(c => c.groupId === group.id).map(card => (
                       <CardComponent
                         key={card.id}
                         card={card}
@@ -380,7 +381,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-1 justify-center flex-wrap min-h-24">
-              {localHand.map((card) => (
+              {cards.filter(c => c.location === 'hand').map((card) => (
                 <CardComponent
                   key={card.id}
                   card={card}
