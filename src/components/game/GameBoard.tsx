@@ -70,9 +70,6 @@ export function GameBoard({ gameId }: GameBoardProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handCards = cards.filter(c => c.location === 'hand');
-  const groupCards = cards.filter(c => c.location === 'group' && c.groupId === undefined);
-
   // Connect socket on mount
   useEffect(() => {
     socket.connect();
@@ -125,9 +122,10 @@ export function GameBoard({ gameId }: GameBoardProps) {
     const { active, over } = event;
 
     if (!over) {
-      console.log('Dropped outside any drop zone');
       return;
     }
+
+    alert(String(over?.id));
 
     if (typeof over.id === 'string' && over.id.startsWith('group-')) {
       const groupId = Number(over.id.replace('group-', ''));
@@ -143,6 +141,19 @@ export function GameBoard({ gameId }: GameBoardProps) {
       });
       setCards(updatedHand);
 
+      return;
+    }
+
+    if (typeof over.id === 'string' && active.id === over.id && !over.id.startsWith('group')) {
+      const draggedCard = cards.find(c => c.id === active.id);
+      if (!draggedCard) return;
+      const updatedHand = cards.map(card => {
+        if (card.id === draggedCard.id) {
+          return { ...card, location: 'hand' as const, groupId: undefined };
+        }
+        return card;
+      });
+      setCards(updatedHand);
       return;
     }
 
@@ -180,23 +191,22 @@ export function GameBoard({ gameId }: GameBoardProps) {
     );
   }
 
-  const isMyTurn = gameState.currentTurnUserId === userId;
-  const canDraw = isMyTurn && !gameState.hasDrewThisTurn;
-  const canDiscard = isMyTurn && gameState.hasDrewThisTurn;
-  const wildRank = gameState.currentRound.wildRank;
-
   const [isManagingGroups, setIsManagingGroups] = useState(false);
   const handleToggle = () => setIsManagingGroups(prev => !prev);
 
-  const [groups, setGroups] = useState<{ id: number}[]>([]); //this is new
+  const isMyTurn = gameState.currentTurnUserId === userId;
+  const canDraw = isMyTurn && !gameState.hasDrewThisTurn;
+  const canDiscard = isMyTurn && gameState.hasDrewThisTurn && !gameState.hasDiscardedThisTurn && !isManagingGroups;
+  const wildRank = gameState.currentRound.wildRank;
+
+  const [groups, setGroups] = useState<{ id: number}[]>([]);
   const handleAddGroup = () => {
     if (groups.length >= 4) return; // Limit to 4 groups
 
     setGroups([...groups, {id: groups.length + 1}]);
   };
   const handleDeleteGroup = () => {
-    if (groups.length === 0) return; // No groups to delete
-
+    if (groups.length === 0) return;
     setGroups(groups.slice(0, -1));
   };
 
