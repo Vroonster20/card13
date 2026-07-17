@@ -614,8 +614,8 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
     socket.on('game:knock', ({ gameId, userId }) => {
       const gameState = gameStates.get(gameId);
       if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
-      if (gameState.currentTurnUserId !== userId) return socket.emit('game:error', { message: 'Not your turn' });
-      if (!gameState.hasDiscardedThisTurn) return socket.emit('game:error', { message: 'Must discard before knocking' });
+      // if (gameState.currentTurnUserId !== userId) return socket.emit('game:error', { message: 'Not your turn' });
+      // if (!gameState.hasDiscardedThisTurn) return socket.emit('game:error', { message: 'Must discard before knocking' });
       if (gameState.isFinalTurnPhase) return socket.emit('game:error', { message: 'Someone already knocked' });
 
       gameState.knockedBy = userId;
