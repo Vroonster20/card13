@@ -4,6 +4,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useGameStore } from '@/store/gameStore';
+import { KnockGroup } from '@/types/game';
 
 let socket: Socket | null = null;
 
@@ -119,9 +120,13 @@ export function useSocket() {
     socketRef.current?.emit('game:end_turn', { gameId, userId });
   }, []);
 
-  const knock = useCallback((gameId: string, userId: string) => {
-    socketRef.current?.emit('game:knock', { gameId, userId });
+  const knock = useCallback((gameId: string, userId: string, groups: any[]) => {
+    socketRef.current?.emit('game:knock', { gameId, userId, groups });
   }, []);
+
+  const updateGroups = (gameId: string, userId: string, groups: KnockGroup[]) => {
+    socketRef.current?.emit('game:update_groups', { gameId, userId, groups });
+  };
 
   return {
     connect,
@@ -137,5 +142,6 @@ export function useSocket() {
     arrangeHand,
     endTurn,
     knock,
+    updateGroups,
   };
 }

@@ -19,9 +19,11 @@ import type {
   ClientGameState,
   ServerPlayer,
   RoundState,
+  Card,
 } from '@/types/game';
-import type { Rank } from '@/types/game';
+import type { Rank, KnockGroup } from '@/types/game';
 import { v4 as uuidv4 } from 'uuid';
+import { isValidRun, isValidSet, validateArrangement } from '@/lib/game-engine/validator';
 
 // ─────────────────────────────────────────────
 // In-memory state stores
@@ -442,6 +444,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
           seatIndex: p.seatIndex,
           isConnected: true,
           hand: [],
+          groups: [],
         }));
 
         const gameState: ServerGameState = {
@@ -584,6 +587,18 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       broadcastGameState(io, gameState);
     });
 
+    socket.on('game:update_groups', ({ gameId, userId, groups }) => {
+      const gameState = gameStates.get(gameId);
+      if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
+
+      console.log("Updated groups:", groups);
+      const player = gameState.players.find(p => p.userId === userId);
+      if (!player) return;
+
+      player.groups = groups;
+      broadcastGameState(io, gameState);
+    });
+
     // Handle Knock and End Turn Events/Logic below
     // socket.on('game:end_turn'...)
     socket.on('game:end_turn', async ({ gameId, userId }: { gameId: string; userId: string }) => {
@@ -611,21 +626,22 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       broadcastGameState(io, gameState);
     });
 
-    socket.on('game:knock', ({ gameId, userId }) => {
+    socket.on('game:knock', ({ gameId, userId, groups }) => {
       const gameState = gameStates.get(gameId);
       if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
-      // if (gameState.currentTurnUserId !== userId) return socket.emit('game:error', { message: 'Not your turn' });
-      // if (!gameState.hasDiscardedThisTurn) return socket.emit('game:error', { message: 'Must discard before knocking' });
       if (gameState.isFinalTurnPhase) return socket.emit('game:error', { message: 'Someone already knocked' });
+
+      const result = canKnock(groups);
+      if (!result.valid) return socket.emit('game:error', { message: result.message });
+
+      const validation = canKnockWithHand(groups);
+      if (!validation) return socket.emit('game:error', { message: 'You cannot knock with your group(s)' });
 
       gameState.knockedBy = userId;
       gameState.isFinalTurnPhase = true;
 
       gameState.remainingFinalTurns =
-        gameState.turnOrder.filter(id => id !== userId);
-
-      console.log('KNOCK STARTED BY', userId);
-      console.log('FINAL TURNS:', gameState.remainingFinalTurns);
+      gameState.turnOrder.filter(id => id !== userId);
 
       // Advance turn
       gameState.hasDrewThisTurn = false;
@@ -634,6 +650,63 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
 
       broadcastGameState(io, gameState);
     });
+
+    function canKnock(groups: KnockGroup[]) {
+      if (groups.length === 0) {
+        return {
+          valid: false,
+          message: "You must create at least one group.",
+        };
+      }
+
+      for (const group of groups) {
+        if (group.cards.length < 3) {
+          return {
+            valid: false,
+            message: `Group ${group.id} must contain at least 3 cards.`,
+          };
+        }
+      }
+
+      const allCards = groups.flatMap(g => g.cards.map(c => c.id));
+      const uniqueCards = new Set(allCards);
+
+      if (allCards.length !== uniqueCards.size) {
+        return {
+          valid: false,
+          message: "A card cannot appear in more than one group.",
+        };
+      }
+
+      return {
+        valid: true,
+        message: "",
+      };
+    }
+
+    interface CardGroup {
+      type: 'set' | 'run';
+      cards: Card[];
+      isValid: boolean;
+    }
+
+    function canKnockWithHand(groups: KnockGroup[]) {
+      const cardGroups: CardGroup[] = [];
+
+      for (const group of groups) {
+        if (isValidSet(group.cards)) {
+          cardGroups.push({ type: 'set', cards: group.cards, isValid: true });
+        }
+        else if (isValidRun(group.cards)) {
+          cardGroups.push({type: 'run', cards: group.cards, isValid: true});
+        }
+        else {
+          return false;
+        }
+      }
+
+      return validateArrangement(cardGroups);
+    }
 
     socket.on('game:arrange_hand', ({ gameId, userId, hand }: { gameId: string; userId: string; hand: any[] }) => {
       const gameState = gameStates.get(gameId);

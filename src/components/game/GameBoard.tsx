@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, DragOverEvent, closestCenter, pointerWithin, KeyboardSensor, PointerSensor, useSensor, useSensors, useDroppable, } from '@dnd-kit/core';
@@ -23,6 +23,7 @@ import type { Card, CardGroup } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2 } from 'lucide-react';
+import { calculateLiveScore } from '@/lib/game-engine/scoring';
 
 // ─────────────────────────────────────────────
 // Types
@@ -367,9 +368,24 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const handleDrawDeck = () => socket.drawFromDeck(gameId, userId);
   const handleDrawDiscard = () => socket.drawFromDiscard(gameId, userId);
   const handleDiscard = (cardId: string) => socket.discardCard(gameId, userId, cardId);
-  const handleKnock = () => socket.knock(gameId, userId);
-  const handleEndTurn = () => socket.endTurn(gameId, userId);
+  const handleKnock = () => {
+    const knockGroups = groups.map(group => ({
+      id: group.id,
+      cards: cards.filter(card => card.groupId === group.id),
+    }));
 
+    socket.updateGroups(gameId, userId, knockGroups);
+    socket.knock(gameId, userId, knockGroups);
+  };
+  const handleEndTurn = () => {
+    const knockGroups = groups.map(group => ({
+      id: group.id,
+      cards: cards.filter(card => card.groupId === group.id),
+    }));
+
+    socket.updateGroups(gameId, userId, knockGroups);
+    socket.endTurn(gameId, userId);
+  };
   // ─────────────────────────────────────────────
   // Render guard
   // ─────────────────────────────────────────────
@@ -387,6 +403,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const canDiscard = isMyTurn && gameState.hasDrewThisTurn && !gameState.hasDiscardedThisTurn && !isManagingGroups;
   const wildRank = gameState.currentRound.wildRank;
   const maxGroups = getMaxGroups(gameState.currentRound.cardsDealt);
+  const liveScore = useMemo(() => calculateLiveScore(cards, groups), [cards, groups]);
 
   const cardIsHighlighted = (card: Card) =>
     showHighlight && detectedGroups.some((g) => g.cards.some((c) => c.id === card.id));
@@ -549,6 +566,16 @@ export function GameBoard({ gameId }: GameBoardProps) {
                 : '🗑️ Discard a card'
               : '⏳ Waiting...'}
           </div>
+
+          <div className="fixed bottom-4 right-4 z-40 bg-green-900/90 border border-green-600 rounded-xl px-4 py-2 backdrop-blur shadow-lg">
+          <div className="text-xs flex items-center gap-2">
+            <span className="text-green-400">Current hand score:</span>
+            <span className={`font-mono font-semibold ${liveScore === 0 ? 'text-green-300' : 'text-yellow-400'}`}>
+              {liveScore} pts
+            </span>
+          </div>
+        </div>
+
         </div>
 
         {/* DnD Context wraps BOTH groups and hand */}

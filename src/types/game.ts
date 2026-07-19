@@ -70,6 +70,7 @@ export interface ServerPlayer {
   seatIndex: number;
   isConnected: boolean;
   hand: Card[];
+  groups: KnockGroup[];
 }
 
 // Set / run groupings for scoring
@@ -78,6 +79,11 @@ export type CardGroup = {
   cards: Card[];
   isValid: boolean;
 };
+
+export interface KnockGroup {
+  id: number;
+  cards: Card[];
+}
 
 export type HandArrangement = {
   groups: CardGroup[];
