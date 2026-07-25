@@ -23,7 +23,7 @@ import type { Card, CardSet } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2 } from 'lucide-react';
-import { calculateLiveScore } from '@/lib/game-engine/scoring';
+import { calculateHandScore } from '@/lib/game-engine/scoring';
 
 // ─────────────────────────────────────────────
 // Types
@@ -394,7 +394,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const canDiscard = isMyTurn && gameState.hasDrewThisTurn && !gameState.hasDiscardedThisTurn && !isManagingGroups;
   const wildRank = gameState.currentRound.wildRank;
   const maxGroups = getMaxGroups(gameState.currentRound.cardsDealt);
-  const liveScore = useMemo(() => calculateLiveScore(cards, knockGroups), [cards, knockGroups]);
+  const liveScore = useMemo(() => calculateHandScore(cards, knockGroups), [cards, knockGroups]);
 
   const cardIsHighlighted = (card: Card) =>
     showHighlight && detectedSets.some((g) => g.cards.some((c) => c.id === card.id));

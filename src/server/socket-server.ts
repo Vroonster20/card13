@@ -12,7 +12,7 @@ import {
   markWilds,
   shuffle,
 } from '@/lib/game-engine/deck';
-import { scoreRound, determineWinner, buildRankings, calculateStatsDelta, calculateLiveScore } from '@/lib/game-engine/scoring';
+import { scoreRound, determineWinner, buildRankings, calculateStatsDelta, calculateHandScore } from '@/lib/game-engine/scoring';
 import type {
   ServerGameState,
   LobbyState,
@@ -635,7 +635,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
 
       const player = gameState.players.find(p => p.userId === userId);
       if (!player) return;
-      const validation = calculateLiveScore(player.hand, groups);
+      const validation = calculateHandScore(player.hand, groups);
       if (validation > 0) return socket.emit('game:error', { message: 'You cannot knock with your group(s)' });
 
       gameState.knockedBy = userId;
@@ -691,24 +691,6 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       isValid: boolean;
     }
 
-    function canKnockWithHand(groups: KnockGroup[]) {
-      const cardGroups: CardGroup[] = [];
-
-      for (const group of groups) {
-        if (isValidSet(group.cards)) {
-          cardGroups.push({ type: 'set', cards: group.cards, isValid: true });
-        }
-        else if (isValidRun(group.cards)) {
-          cardGroups.push({type: 'run', cards: group.cards, isValid: true});
-        }
-        else {
-          return false;
-        }
-      }
-
-      return validateArrangement(cardGroups);
-    }
-
     socket.on('game:arrange_hand', ({ gameId, userId, hand }: { gameId: string; userId: string; hand: any[] }) => {
       const gameState = gameStates.get(gameId);
       if (!gameState) return;
@@ -760,8 +742,6 @@ async function handleRoundEnd(io: SocketIOServer, gameState: ServerGameState) {
   const { currentRound, players, cumulativeScores, gameId } = gameState;
 
   // Score all players
-  //scoreRound uses scoreGroupedHand, this will need to change since
-  //scoreGroupedHand will be removed with calculateLiveScore
   const scores = scoreRound(players, currentRound.wildRank);
 
   // Update cumulative scores

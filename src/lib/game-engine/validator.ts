@@ -100,6 +100,65 @@ function _checkRun(
 }
 
 /**
+ * This function checks if a given arrangement of cards (sets and runs) is valid according to the game rules.
+ * The function will not sort the cards for the user.
+*/  
+
+export function isOrderedRun(cards: Card[]): boolean {
+  if (cards.length < 3) return false;
+
+  const naturals = cards.filter(c => !c.isWild);
+  if (naturals.length === 0) return false;
+
+  const getVal = (rank: Rank, aceHigh: boolean): number => {
+    if (rank === 'A') return aceHigh ? 14 : 1;
+    return RANK_ORDER[rank];
+  };
+
+  return (
+    checkOrdered(cards, false, getVal) ||
+    checkOrdered(cards, true, getVal)
+  );
+}
+
+function checkOrdered(
+  cards: Card[],
+  aceHigh: boolean,
+  getVal: (rank: Rank, aceHigh: boolean) => number
+): boolean {
+  const minVal = aceHigh ? 2 : 1;
+  const maxVal = aceHigh ? 14 : 13;
+
+  let anchorIndex = -1;
+  let anchorValue = -1;
+
+  for (let i = 0; i < cards.length; i++) {
+    if (!cards[i].isWild) {
+      anchorIndex = i;
+      anchorValue = getVal(cards[i].rank, aceHigh);
+      break;
+    }
+  }
+
+  if (anchorIndex === -1) return false;
+
+  const startValue = anchorValue - anchorIndex;
+  const endValue = startValue + cards.length - 1;
+
+  if (startValue < minVal || endValue > maxVal) return false;
+
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    if (card.isWild) continue;
+
+    const expectedValue = startValue + i;
+    if (getVal(card.rank, aceHigh) !== expectedValue) return false;
+  }
+
+  return true;
+}
+
+/**
  * Find the best (lowest-score) valid arrangement of a hand.
  * Tries to match as many cards as possible into valid sets and runs.
  * Returns groups and leftover cards.
