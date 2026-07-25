@@ -1,7 +1,7 @@
 // src/lib/game-engine/validator.ts
 // Validates sets and runs according to Card Game "13" rules
 
-import type { Card, Rank, CardGroup } from '@/types/game';
+import type { Card, Rank, CardSet } from '@/types/game';
 
 // Numeric rank ordering (Ace = 1 for run purposes)
 const RANK_ORDER: Record<Rank, number> = {
@@ -110,11 +110,11 @@ function _checkRun(
  * 3. Return matched + unmatched
  */
 export function findBestArrangement(hand: Card[]): {
-  groups: CardGroup[];
-  ungrouped: Card[];
+  sets: CardSet[];
+  unset: Card[];
 } {
   const usedIds = new Set<string>();
-  const groups: CardGroup[] = [];
+  const sets: CardSet[] = [];
 
   // ── Sets ──
   // Group cards by rank
@@ -135,12 +135,12 @@ export function findBestArrangement(hand: Card[]): {
   for (const [, cards] of byRank) {
     if (cards.length >= 3) {
       const setCards = cards.map(c => ({ ...c }));
-      groups.push({ type: 'set', cards: setCards, isValid: true });
+      sets.push({ type: 'set', cards: setCards, isValid: true });
       setCards.forEach(c => usedIds.add(c.id));
     } else if (cards.length === 2 && availableWilds.length >= 1) {
       const wild = availableWilds.pop()!;
       const setCards = [...cards, wild];
-      groups.push({ type: 'set', cards: setCards, isValid: true });
+      sets.push({ type: 'set', cards: setCards, isValid: true });
       setCards.forEach(c => usedIds.add(c.id));
     }
   }
@@ -182,24 +182,24 @@ export function findBestArrangement(hand: Card[]): {
       }
 
       if (runCards.length >= 3 && isValidRun(runCards)) {
-        groups.push({ type: 'run', cards: runCards, isValid: true });
+        sets.push({ type: 'run', cards: runCards, isValid: true });
         runCards.forEach(c => usedIds.add(c.id));
       }
       i = j;
     }
   }
 
-  const ungrouped = hand.filter(c => !usedIds.has(c.id));
+  const unset = hand.filter(c => !usedIds.has(c.id));
 
-  return { groups, ungrouped };
+  return { sets, unset };
 }
 
 /**
  * Validate a user-submitted arrangement.
  * Returns true if all groups in the arrangement are valid.
  */
-export function validateArrangement(groups: CardGroup[]): boolean {
-  return groups.every(group =>
-    group.type === 'set' ? isValidSet(group.cards) : isValidRun(group.cards)
+export function validateArrangement(sets: CardSet[]): boolean {
+  return sets.every(set =>
+    set.type === 'set' ? isValidSet(set.cards) : isValidRun(set.cards)
   );
 }

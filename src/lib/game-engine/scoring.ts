@@ -1,7 +1,7 @@
 // src/lib/game-engine/scoring.ts
 // Complete scoring engine for Card Game "13"
 
-import type { Card, ServerPlayer, ScoringResult, CardGroup, KnockGroup } from '@/types/game';
+import type { Card, ServerPlayer, ScoringResult, KnockGroup, CardSet } from '@/types/game';
 import { cardPoints, findBestArrangement, isValidRun, isValidSet } from './validator';
 import { markWilds } from './deck';
 import type { Rank } from '@/types/game';
@@ -26,25 +26,25 @@ export function scoreHand(hand: Card[], wildRank: Rank): ScoringResult & { userI
   const markedHand = markWilds(hand, wildRank);
 
   // Find best arrangement
-  const { groups, ungrouped } = findBestArrangement(markedHand);
+  const { sets, unset } = findBestArrangement(markedHand);
 
-  console.log(groups);
-  console.log(ungrouped);
+  console.log(sets);
+  console.log(unset);
 
   // Score unmatched cards
-  const roundScore = ungrouped.reduce((sum, card) => {
+  const roundScore = unset.reduce((sum, card) => {
     // Wild cards in ungrouped still count their face value (can't be in a group alone)
     return sum + cardPoints(card.rank);
   }, 0);
 
-  const matchedCards = groups.flatMap(g => g.cards);
+  const matchedCards = sets.flatMap(g => g.cards);
 
   return {
     userId: '', // caller fills this in
     roundScore,
     matchedCards,
-    unmatchedCards: ungrouped,
-    detectedGroups: groups,
+    unmatchedCards: unset,
+    detectedSets: sets,
   };
 }
 
@@ -144,22 +144,36 @@ export function calculateStatsDelta(params: {
   };
 }
 
-export function calculateLiveScore(cards: GroupedCard[], groups: Group[]): number {
+export function calculateLiveScore(hand: Card[], groups: KnockGroup[]): number {
     let score = 0;
 
-    // Loose hand cards always count at face value
-    const handCards = cards.filter((c) => c.location === 'hand');
-    score += handCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
+    // // Loose hand cards always count at face value
+    // const handCards = cards.filter((c) => c.location === 'hand');
+    // score += handCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
 
-    // Each group: 0 if valid set/run, otherwise face value of its cards
+    // // Each group: 0 if valid set/run, otherwise face value of its cards
+    // for (const group of groups) {
+    //   const groupCards = cards.filter(
+    //     (c) => c.location === 'group' && c.groupId === group.id
+    //   );
+    //   if (groupCards.length === 0) continue;
+
+    //   const isValid = isValidSet(groupCards) || isValidRun(groupCards);
+    //   if (!isValid) {
+    //     score += groupCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
+    //   }
+    // }
+
+    const groupedIds = new Set(groups.flatMap(g => g.cards.map(c => c.id)));
+    const looseCards = hand.filter(c => !groupedIds.has(c.id));
+
+    score += looseCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
+
     for (const group of groups) {
-      const groupCards = cards.filter(
-        (c) => c.location === 'group' && c.groupId === group.id
-      );
-      if (groupCards.length === 0) continue;
+      const groupCards = group.cards;
 
-      const isValid = isValidSet(groupCards) || isValidRun(groupCards);
-      if (!isValid) {
+      const valid = isValidSet(groupCards) || isValidRun(groupCards);
+      if (!valid) {
         score += groupCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
       }
     }
@@ -172,7 +186,7 @@ export function calculateLiveScore(cards: GroupedCard[], groups: Group[]): numbe
 
     const matchedCards: Card[] = [];
     const unmatchedCards: Card[] = [];
-    const detectedGroups: CardGroup[] = [];
+    const detectedSets: CardSet[] = [];
 
     const groupedIds = new Set(groups.flatMap(g => g.cards.map(c => c.id)));
     const looseCards = hand.filter(c => !groupedIds.has(c.id));
@@ -183,7 +197,7 @@ export function calculateLiveScore(cards: GroupedCard[], groups: Group[]): numbe
 
       if (validSet || validRun) {
         matchedCards.push(...group.cards);
-        detectedGroups.push({ type: validSet ? 'set' : 'run', cards: group.cards, isValid: true });
+        detectedSets.push({ type: validSet ? 'set' : 'run', cards: group.cards, isValid: true });
       } else {
         unmatchedCards.push(...group.cards, ...looseCards);
         roundScore += group.cards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
@@ -191,15 +205,15 @@ export function calculateLiveScore(cards: GroupedCard[], groups: Group[]): numbe
       }
     }
 
-    console.log("HAND:", hand);
-    console.log("GROUPS:", groups);
-    console.log("LOOSE:", looseCards);
+    // console.log("HAND:", hand);
+    // console.log("GROUPS:", groups);
+    // console.log("LOOSE:", looseCards);
 
     return {
       userId: '', // caller fills this in
       roundScore,
       matchedCards,
       unmatchedCards,
-      detectedGroups,
+      detectedSets,
     };
   }

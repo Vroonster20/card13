@@ -19,7 +19,7 @@ import { RoundEndOverlay } from './RoundEndOverlay';
 import { GameEndOverlay } from './GameEndOverlay';
 import { findBestArrangement } from '@/lib/game-engine/validator';
 import { markWilds } from '@/lib/game-engine/deck';
-import type { Card, CardGroup } from '@/types/game';
+import type { Card, CardSet } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2 } from 'lucide-react';
@@ -146,7 +146,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const [overZoneId, setOverZoneId] = useState<string | null>(null);
 
   // For detected runs/sets (highlight only, not grouping)
-  const [detectedGroups, setDetectedGroups] = useState<CardGroup[]>([]);
+  const [detectedSets, setDetectedSets] = useState<CardSet[]>([]);
   const [showHighlight, setShowHighlight] = useState(false);
 
   // ── DnD sensors ──
@@ -203,8 +203,8 @@ export function GameBoard({ gameId }: GameBoardProps) {
 
   const detectGroups = useCallback((hand: Card[], wildRank: string) => {
     const marked = markWilds(hand, wildRank as any);
-    const { groups } = findBestArrangement(marked);
-    setDetectedGroups(groups);
+    const { sets } = findBestArrangement(marked);
+    setDetectedSets(sets);
   }, []);
 
   // ─────────────────────────────────────────────
@@ -368,21 +368,12 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const handleDrawDeck = () => socket.drawFromDeck(gameId, userId);
   const handleDrawDiscard = () => socket.drawFromDiscard(gameId, userId);
   const handleDiscard = (cardId: string) => socket.discardCard(gameId, userId, cardId);
+  const knockGroups = groups.map(group => ({ id: group.id, cards: cards.filter(card => card.groupId === group.id) }));
   const handleKnock = () => {
-    const knockGroups = groups.map(group => ({
-      id: group.id,
-      cards: cards.filter(card => card.groupId === group.id),
-    }));
-
     socket.updateGroups(gameId, userId, knockGroups);
     socket.knock(gameId, userId, knockGroups);
   };
   const handleEndTurn = () => {
-    const knockGroups = groups.map(group => ({
-      id: group.id,
-      cards: cards.filter(card => card.groupId === group.id),
-    }));
-
     socket.updateGroups(gameId, userId, knockGroups);
     socket.endTurn(gameId, userId);
   };
@@ -403,10 +394,10 @@ export function GameBoard({ gameId }: GameBoardProps) {
   const canDiscard = isMyTurn && gameState.hasDrewThisTurn && !gameState.hasDiscardedThisTurn && !isManagingGroups;
   const wildRank = gameState.currentRound.wildRank;
   const maxGroups = getMaxGroups(gameState.currentRound.cardsDealt);
-  const liveScore = useMemo(() => calculateLiveScore(cards, groups), [cards, groups]);
+  const liveScore = useMemo(() => calculateLiveScore(cards, knockGroups), [cards, knockGroups]);
 
   const cardIsHighlighted = (card: Card) =>
-    showHighlight && detectedGroups.some((g) => g.cards.some((c) => c.id === card.id));
+    showHighlight && detectedSets.some((g) => g.cards.some((c) => c.id === card.id));
 
   // ─────────────────────────────────────────────
   // JSX
@@ -569,7 +560,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
 
           <div className="fixed bottom-4 right-4 z-40 bg-green-900/90 border border-green-600 rounded-xl px-4 py-2 backdrop-blur shadow-lg">
           <div className="text-xs flex items-center gap-2">
-            <span className="text-green-400">Current hand score:</span>
+            <span className="text-green-400">Current score:</span>
             <span className={`font-mono font-semibold ${liveScore === 0 ? 'text-green-300' : 'text-yellow-400'}`}>
               {liveScore} pts
             </span>

@@ -759,6 +759,8 @@ async function handleRoundEnd(io: SocketIOServer, gameState: ServerGameState) {
   const { currentRound, players, cumulativeScores, gameId } = gameState;
 
   // Score all players
+  //scoreRound uses scoreGroupedHand, this will need to change since
+  //scoreGroupedHand will be removed with calculateLiveScore
   const scores = scoreRound(players, currentRound.wildRank);
 
   // Update cumulative scores

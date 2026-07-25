@@ -74,7 +74,7 @@ export interface ServerPlayer {
 }
 
 // Set / run groupings for scoring
-export type CardGroup = {
+export type CardSet = {
   type: 'set' | 'run';
   cards: Card[];
   isValid: boolean;
@@ -86,8 +86,8 @@ export interface KnockGroup {
 }
 
 export type HandArrangement = {
-  groups: CardGroup[];
-  ungrouped: Card[];
+  sets: CardSet[];
+  unset: Card[];
 };
 
 // ─────────────────────────────────────────────
@@ -183,5 +183,5 @@ export interface ScoringResult {
   roundScore: number;
   matchedCards: Card[];
   unmatchedCards: Card[];
-  detectedGroups: CardGroup[];
+  detectedSets: CardSet[];
 }
