@@ -59,8 +59,14 @@ export function scoreRound(
   const results = new Map<string, ScoringResult>();
 
   for (const player of players) {
-    const result = scoreGroupedHand(player.hand, player.groups);
-    result.userId = player.userId;
+    const score = calculateLiveScore(player.hand, player.groups);
+    const result = {
+      userId: player.userId,
+      roundScore: score,
+      matchedCards: [],
+      unmatchedCards: [],
+      detectedSets: [],
+    };
     results.set(player.userId, result);
   }
 
@@ -146,23 +152,6 @@ export function calculateStatsDelta(params: {
 
 export function calculateLiveScore(hand: Card[], groups: KnockGroup[]): number {
     let score = 0;
-
-    // // Loose hand cards always count at face value
-    // const handCards = cards.filter((c) => c.location === 'hand');
-    // score += handCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
-
-    // // Each group: 0 if valid set/run, otherwise face value of its cards
-    // for (const group of groups) {
-    //   const groupCards = cards.filter(
-    //     (c) => c.location === 'group' && c.groupId === group.id
-    //   );
-    //   if (groupCards.length === 0) continue;
-
-    //   const isValid = isValidSet(groupCards) || isValidRun(groupCards);
-    //   if (!isValid) {
-    //     score += groupCards.reduce((sum, c) => sum + cardPoints(c.rank), 0);
-    //   }
-    // }
 
     const groupedIds = new Set(groups.flatMap(g => g.cards.map(c => c.id)));
     const looseCards = hand.filter(c => !groupedIds.has(c.id));

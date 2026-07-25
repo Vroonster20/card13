@@ -12,7 +12,7 @@ import {
   markWilds,
   shuffle,
 } from '@/lib/game-engine/deck';
-import { scoreRound, determineWinner, buildRankings, calculateStatsDelta } from '@/lib/game-engine/scoring';
+import { scoreRound, determineWinner, buildRankings, calculateStatsDelta, calculateLiveScore } from '@/lib/game-engine/scoring';
 import type {
   ServerGameState,
   LobbyState,
@@ -591,7 +591,6 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       const gameState = gameStates.get(gameId);
       if (!gameState) return socket.emit('game:error', { message: 'Game not found' });
 
-      console.log("Updated groups:", groups);
       const player = gameState.players.find(p => p.userId === userId);
       if (!player) return;
 
@@ -634,8 +633,10 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
       const result = canKnock(groups);
       if (!result.valid) return socket.emit('game:error', { message: result.message });
 
-      const validation = canKnockWithHand(groups);
-      if (!validation) return socket.emit('game:error', { message: 'You cannot knock with your group(s)' });
+      const player = gameState.players.find(p => p.userId === userId);
+      if (!player) return;
+      const validation = calculateLiveScore(player.hand, groups);
+      if (validation > 0) return socket.emit('game:error', { message: 'You cannot knock with your group(s)' });
 
       gameState.knockedBy = userId;
       gameState.isFinalTurnPhase = true;
