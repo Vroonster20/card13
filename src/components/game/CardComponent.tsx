@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { Card, Rank } from '@/types/game';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface CardComponentProps {
   card: Card;
@@ -29,6 +30,26 @@ const SUIT_COLOR: Record<string, string> = {
   clubs: 'text-black',
   spades: 'text-black',
 };
+
+function getCardImage(card: Card): string {
+  const rankMap: Record<Rank, string> = {
+    '2': '2',
+    '3': '3',
+    '4': '4',
+    '5': '5',
+    '6': '6',
+    '7': '7',
+    '8': '8',
+    '9': '9',
+    '10': '10',
+    J: 'jack',
+    Q: 'queen',
+    K: 'king',
+    A: 'ace',
+  };
+
+  return `/cards/${rankMap[card.rank]}_of_${card.suit}.svg`;
+}
 
 export function CardComponent({
   card,
@@ -65,15 +86,15 @@ export function CardComponent({
       whileTap={canDiscard ? { scale: 0.95 } : {}}
       className={cn(
         'relative select-none cursor-grab active:cursor-grabbing',
-        'w-14 h-20 sm:w-16 sm:h-24',
-        'rounded-lg bg-white shadow-lg border-2',
+        'w-16 h-24 sm:w-20 sm:h-28',
+        'rounded-lg shadow-lg',
         'flex flex-col items-start justify-between p-1',
         'transition-all duration-150',
         isSortDragging && 'opacity-30',
         isDragging && 'shadow-2xl cursor-grabbing rotate-3',
         isInGroup && 'border-green-400 shadow-green-400/30 shadow-lg ring-1 ring-green-400',
         !isInGroup && 'border-gray-200',
-        isWild && 'border-purple-400 ring-1 ring-purple-400',
+        isWild && 'border-purple-600 ring-3 ring-purple-500',
         canDiscard && !isSortDragging && 'cursor-pointer'
       )}
     >
@@ -85,21 +106,29 @@ export function CardComponent({
       )}
 
       {/* Top left rank + suit */}
-      <div className={cn('text-xs font-bold leading-none', SUIT_COLOR[card.suit])}>
+      {/* <div className={cn('text-xs font-bold leading-none', SUIT_COLOR[card.suit])}>
         <div>{card.rank}</div>
         <div>{SUIT_SYMBOL[card.suit]}</div>
-      </div>
+      </div> */}
 
       {/* Center suit symbol */}
-      <div className={cn('text-2xl self-center', SUIT_COLOR[card.suit])}>
+      {/* <div className={cn('text-2xl self-center', SUIT_COLOR[card.suit])}>
         {SUIT_SYMBOL[card.suit]}
-      </div>
+      </div> */}
 
       {/* Bottom right rank + suit (rotated) */}
-      <div className={cn('text-xs font-bold leading-none self-end rotate-180', SUIT_COLOR[card.suit])}>
+      {/* <div className={cn('text-xs font-bold leading-none self-end rotate-180', SUIT_COLOR[card.suit])}>
         <div>{card.rank}</div>
         <div>{SUIT_SYMBOL[card.suit]}</div>
-      </div>
+      </div> */}
+
+      <Image
+        src={getCardImage(card)}
+        alt={`${card.rank} of ${card.suit}`}
+        fill
+        className="rounded-md pointer-events-none select-none "
+        draggable={false}
+      />
 
       {/* Discard indicator */}
       {canDiscard && (
@@ -118,7 +147,7 @@ export function CardBack({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'w-14 h-20 sm:w-16 sm:h-24 rounded-lg border-2 border-blue-700 bg-blue-800',
+        'w-16 h-24 sm:w-20 sm:h-28 rounded-lg border-2 border-blue-700 bg-blue-800',
         'shadow-md flex items-center justify-center',
         className
       )}

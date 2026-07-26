@@ -104,12 +104,9 @@ function initRound(gameState: ServerGameState, roundNumber: number): void {
   const cardsDealt = getCardsDealt(roundNumber);
   const wildRank = getWildRank(roundNumber);
 
-  // Re-shuffle if draw pile too small
-  if (gameState.drawPile.length < gameState.players.length * cardsDealt + 1) {
-    const combined = shuffle([...gameState.drawPile, ...gameState.discardPile]);
-    gameState.drawPile = combined;
-    gameState.discardPile = [];
-  }
+  // Re-shuffle every new round
+  gameState.drawPile = createShuffledDoubleDeck();
+  gameState.discardPile = [];
 
   const { hands, remainingPile } = dealHands(
     gameState.drawPile,

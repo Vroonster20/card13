@@ -21,8 +21,8 @@ export function DrawPile({ count, canDraw, onDraw }: DrawPileProps) {
         className={`relative ${canDraw ? 'cursor-pointer' : 'cursor-default opacity-70'}`}
       >
         {/* Stack effect */}
-        <div className="absolute top-1 left-1 w-14 h-20 sm:w-16 sm:h-24 rounded-lg bg-blue-900 border-2 border-blue-700" />
-        <div className="absolute top-0.5 left-0.5 w-14 h-20 sm:w-16 sm:h-24 rounded-lg bg-blue-850 border-2 border-blue-700" />
+        <div className="absolute top-1 left-1 w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-blue-900 border-2 border-blue-700" />
+        <div className="absolute top-0.5 left-0.5 w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-blue-850 border-2 border-blue-700" />
         <CardBack />
         {canDraw && (
           <div className="absolute inset-0 rounded-lg ring-2 ring-yellow-400 ring-offset-1 ring-offset-green-950 animate-pulse" />

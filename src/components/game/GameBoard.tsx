@@ -377,6 +377,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
     socket.updateGroups(gameId, userId, knockGroups);
     socket.endTurn(gameId, userId);
   };
+  const canEditHand = gameState?.isFinalTurnPhase && gameState.currentTurnUserId !== userId;
   // ─────────────────────────────────────────────
   // Render guard
   // ─────────────────────────────────────────────
@@ -496,7 +497,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
       </AnimatePresence>
 
       {/* Hand Area */}
-      <div className="bg-green-900/80 border-t border-green-700 p-4">
+      <div className={`bg-green-900/80 border-t border-green-700 p-4 ${canEditHand ? "pointer-events-none opacity-70" : ""}`}>
 
         {/* Controls */}
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
