@@ -217,7 +217,29 @@ export function GameBoard({ gameId }: GameBoardProps) {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    setOverZoneId(event.over ? String(event.over.id) : null);
+    const overId = event.over?.id;
+
+    if (!overId) {
+      setOverZoneId(null);
+      return;
+    }
+
+    if (typeof overId === 'string' && overId.startsWith('group-')) {
+      setOverZoneId(overId);
+      return;
+    }
+
+    if (overId === 'hand') {
+      setOverZoneId('hand');
+      return;
+    }
+    
+    const overCard = cards.find((c) => c.id === overId);
+    if (overCard?.location === 'group') {
+      setOverZoneId(`group-${overCard.groupId}`);
+    } else {
+      setOverZoneId(null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -274,6 +296,18 @@ export function GameBoard({ gameId }: GameBoardProps) {
         const reordered = arrayMove(handOnly, oldIdx, newIdx);
         return [...reordered, ...rest];
       });
+      syncHandToServer();
+      return;
+    }
+
+    if (draggedCard.location === 'hand' && overCard.location === 'group') {
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === activeId
+            ? { ...c, location: 'group', groupId: overCard.groupId }
+            : c
+        )
+      );
       syncHandToServer();
       return;
     }
