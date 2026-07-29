@@ -407,10 +407,19 @@ export function GameBoard({ gameId }: GameBoardProps) {
     socket.updateGroups(gameId, userId, knockGroups);
     socket.knock(gameId, userId, knockGroups);
   };
-  const handleEndTurn = () => {
-    socket.updateGroups(gameId, userId, knockGroups);
+  const [showEndTurnConfirm, setShowEndTurnConfirm] = useState(false);
+  const handleEndTurnClick = () => {
+    if (gameState?.isFinalTurnPhase) {
+      setShowEndTurnConfirm(true);
+    } else {
+      socket.endTurn(gameId, userId);
+    }
+  };
+  const confirmEndTurn = () => {
+    setShowEndTurnConfirm(false);
     socket.endTurn(gameId, userId);
   };
+
   const canEditHand = gameState?.isFinalTurnPhase && gameState.currentTurnUserId !== userId;
   // ─────────────────────────────────────────────
   // Render guard
@@ -546,7 +555,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
             </Button>
             <Button
               size="sm"
-              onClick={handleEndTurn}
+              onClick={handleEndTurnClick}
               disabled={!isMyTurn || !gameState.hasDiscardedThisTurn}
               className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40"
             >
@@ -689,6 +698,34 @@ export function GameBoard({ gameId }: GameBoardProps) {
             myUserId={userId}
             onClose={() => router.push('/dashboard')}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEndTurnConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+              className="bg-green-900 border border-green-600 rounded-2xl p-6 max-w-sm w-full mx-4"
+            >
+              <h3 className="text-lg font-bold text-white mb-2">Final turn — you sure?</h3>
+              <p className="text-sm text-green-300 mb-4">
+                Someone knocked. Any cards left loose or in an invalid group will count against you.<br /><br />
+                Current hand score: <span className="font-mono text-yellow-400">{liveScore} pts</span>
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setShowEndTurnConfirm(false)} className="flex-1 border-green-600 text-green-300">
+                  Keep Arranging
+                </Button>
+                <Button onClick={confirmEndTurn} className="flex-1 bg-blue-600 hover:bg-blue-500">
+                  Submit Turn
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
