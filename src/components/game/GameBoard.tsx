@@ -409,8 +409,11 @@ export function GameBoard({ gameId }: GameBoardProps) {
   };
   const [showEndTurnConfirm, setShowEndTurnConfirm] = useState(false);
   const handleEndTurnClick = () => {
-    if (gameState?.isFinalTurnPhase) {
+    if (gameState?.isFinalTurnPhase && calculateHandScore(cards, knockGroups) > 0) {
       setShowEndTurnConfirm(true);
+    } else if (gameState?.isFinalTurnPhase && calculateHandScore(cards, knockGroups) === 0) {
+      socket.updateGroups(gameId, userId, knockGroups);
+      socket.endTurn(gameId, userId);
     } else {
       socket.endTurn(gameId, userId);
     }
