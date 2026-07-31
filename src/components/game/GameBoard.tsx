@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2 } from 'lucide-react';
 import { calculateHandScore } from '@/lib/game-engine/scoring';
+import { GroupSummaryBadge } from './GroupSummaryBadge';
 
 // ─────────────────────────────────────────────
 // Types
@@ -409,17 +410,20 @@ export function GameBoard({ gameId }: GameBoardProps) {
   };
   const [showEndTurnConfirm, setShowEndTurnConfirm] = useState(false);
   const handleEndTurnClick = () => {
-    if (gameState?.isFinalTurnPhase && calculateHandScore(cards, knockGroups) > 0) {
+    const currentScore = calculateHandScore(cards, knockGroups);
+
+    if (gameState?.isFinalTurnPhase && currentScore > 0) {
       setShowEndTurnConfirm(true);
-    } else if (gameState?.isFinalTurnPhase && calculateHandScore(cards, knockGroups) === 0) {
-      socket.updateGroups(gameId, userId, knockGroups);
-      socket.endTurn(gameId, userId);
-    } else {
-      socket.endTurn(gameId, userId);
+      return;
     }
+
+    socket.updateGroups(gameId, userId, knockGroups);
+    socket.endTurn(gameId, userId);
   };
+
   const confirmEndTurn = () => {
     setShowEndTurnConfirm(false);
+    socket.updateGroups(gameId, userId, knockGroups);
     socket.endTurn(gameId, userId);
   };
 
@@ -637,6 +641,18 @@ export function GameBoard({ gameId }: GameBoardProps) {
                   onDiscard={handleDiscard}
                   wildRank={wildRank}
                   isOver={overZoneId === `group-${group.id}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {!isManagingGroups && groups.length > 0 && (
+            <div className="flex gap-2 justify-center mb-3 flex-wrap">
+              {groups.map((group) => (
+                <GroupSummaryBadge
+                  key={group.id}
+                  groupId={group.id}
+                  cards={cardsInGroup(group.id)}
                 />
               ))}
             </div>
