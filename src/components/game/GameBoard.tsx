@@ -19,7 +19,7 @@ import { RoundEndOverlay } from './RoundEndOverlay';
 import { GameEndOverlay } from './GameEndOverlay';
 import { findBestArrangement } from '@/lib/game-engine/validator';
 import { markWilds } from '@/lib/game-engine/deck';
-import type { Card, CardSet } from '@/types/game';
+import type { Card, CardSet, Rank } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wand2 } from 'lucide-react';
@@ -202,11 +202,29 @@ export function GameBoard({ gameId }: GameBoardProps) {
     return () => clearTimeout(t);
   }, [error, setError]);
 
+  useEffect(() => {
+    setGroups([]);
+  }, [gameState?.currentRound.roundNumber]);
+
   const detectGroups = useCallback((hand: Card[], wildRank: string) => {
     const marked = markWilds(hand, wildRank as any);
     const { sets } = findBestArrangement(marked);
     setDetectedSets(sets);
   }, []);
+
+  // ── Sorting of the cards ──
+  const SORT_ORDER: Record<Rank, number> = {
+    A: 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
+    '7': 7, '8': 8, '9': 9, '10': 10, J: 11, Q: 12, K: 13,
+  };
+
+  const handleSort = () => {
+    setCards((prev) => {
+      const handCards = prev.filter((c) => c.location === 'hand').sort((a, b) => SORT_ORDER[a.rank] - SORT_ORDER[b.rank]);
+      const groupCards = prev.filter((c) => c.location !== 'hand');
+      return [...handCards, ...groupCards];
+    });
+  };
 
   // ─────────────────────────────────────────────
   // Drag handlers
@@ -572,7 +590,7 @@ export function GameBoard({ gameId }: GameBoardProps) {
               size="sm"
               variant="outline"
               onClick={() => setIsManagingGroups((p) => !p)}
-              className="text-green-100 border-green-600 hover:bg-green-800"
+              className="text-green-100 border-2 border-yellow-400 hover:bg-yellow-400 ring-2 ring-yellow-400 rounded-lg"
             >
               <Wand2 className="w-4 h-4 mr-1" />
               {isManagingGroups ? 'Close Groups' : 'Manage Groups'}
@@ -599,6 +617,14 @@ export function GameBoard({ gameId }: GameBoardProps) {
                 </Button>
               </>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSort}
+              className="text-green-100 border-2 border-green-600 hover:bg-green-800"
+            >
+              Sort Cards
+            </Button>
           </div>
 
           <div className="text-sm text-green-300">

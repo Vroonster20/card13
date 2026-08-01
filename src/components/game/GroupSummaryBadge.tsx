@@ -11,7 +11,7 @@ export function GroupSummaryBadge({ groupId, cards }: GroupSummaryBadgeProps) {
     if (cards.length === 0) return null;
     
     return (
-        <div className="px-3 py-2 -mt-2 rounded-full border text-sm font-mono whitespace-nowrap">
+        <div className="px-3 py-2 -mt-0 rounded-full border text-sm font-mono whitespace-nowrap">
             <span className="text-green-400 mr-1.5">G{groupId}</span>
             {cards.map((c, i) => (
                 <span key={i}>
