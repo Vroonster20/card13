@@ -21,6 +21,7 @@ export interface Player {
   isConnected: boolean;
   hand: Card[];         // only populated for the requesting player
   handCount: number;    // always visible to all
+  isGuest: boolean;
 }
 
 export interface RoundState {
@@ -71,6 +72,7 @@ export interface ServerPlayer {
   isConnected: boolean;
   hand: Card[];
   groups: KnockGroup[];
+  isGuest: boolean;
 }
 
 // Set / run groupings for scoring
@@ -144,6 +146,7 @@ export interface ClientPlayer {
   seatIndex: number;
   isConnected: boolean;
   handCount: number;           // visible to all
+  isGuest: boolean;
 }
 
 export interface Ranking {
@@ -172,6 +175,7 @@ export interface LobbyPlayerState {
   image?: string | null;
   isReady: boolean;
   seatIndex: number;
+  isGuest: boolean;
 }
 
 // ─────────────────────────────────────────────

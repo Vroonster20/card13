@@ -44,6 +44,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.image,
+          isGuest: user.isGuest,
+        };
+      },
+    }),
+    Credentials({
+      id: 'guest',
+      name: 'Guest',
+      credentials: {
+        userId: { type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.userId) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { id: credentials.userId as string },
+        });
+
+        if (!user || !user.isGuest) return null;
+
+        return { 
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          isGuest: user.isGuest,
         };
       },
     }),
@@ -52,12 +77,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.isGuest = user.isGuest;
       }
       return token;
     },
     async session({ session, token }) {
       if (token.id && session.user) {
         session.user.id = token.id as string;
+        session.user.isGuest = token.isGuest as boolean;
       }
       return session;
     },

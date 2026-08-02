@@ -62,6 +62,7 @@ function buildClientState(gameState: ServerGameState, forUserId: string): Client
       seatIndex: p.seatIndex,
       isConnected: p.isConnected,
       handCount: p.hand.length,
+      isGuest: p.isGuest,
     })),
     myHand,
     discardPile: gameState.discardPile,
@@ -178,6 +179,9 @@ async function persistGameEnd(gameState: ServerGameState) {
 
     // Update each player's final score and rank
     for (const ranking of rankings) {
+      const player = players.find(p => p.userId === ranking.userId);
+      if (player?.isGuest) continue; // Skip guest players for stats
+
       const gp = await tx.gamePlayer.findFirst({
         where: { gameId, userId: ranking.userId },
       });
@@ -296,6 +300,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
             image: p.user.image,
             isReady: p.isReady,
             seatIndex: p.seatIndex,
+          isGuest: false
           })),
         };
 
@@ -350,7 +355,8 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
             image: p.user.image,
             isReady: p.isReady,
             seatIndex: p.seatIndex,
-          })),
+          isGuest: false,
+        })),
         };
 
         lobbyStates.set(code, lobbyState);
@@ -442,6 +448,7 @@ export function setupSocketServer(httpServer: HttpServer): SocketIOServer {
           isConnected: true,
           hand: [],
           groups: [],
+          isGuest: false,
         }));
 
         const gameState: ServerGameState = {

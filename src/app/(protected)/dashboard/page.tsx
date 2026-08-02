@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+  const isGuest = session.user.isGuest;
 
   const userId = session.user.id;
   const stats = await prisma.userStatistics.findUnique({ where: { userId } });
@@ -27,10 +28,22 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 p-6">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Welcome back, {session.user.name}! 👋</h1>
-          <p className="text-green-400 mt-1">Ready for another round?</p>
+          <h1 className="text-3xl font-bold text-white">Welcome, {session.user.name}! 👋</h1>
+          <p className="text-green-400 mt-1">Ready to play a round?</p>
         </div>
 
+        {isGuest ? (
+          <div className="rounded-xl border border-yellow-600 bg-yellow-900/20 p-6 text-center mb-6">
+            <h2 className="text-xl font-semibold">Playing as Guest</h2>
+            <p className="text-yellow-300 mt-2">
+              Guest accounts don't save statistics or match history.
+            </p><br />
+            <Button asChild size="lg" className="bg-green-600 hover:bg-green-500 text-white h-14 text-base">
+              <Link href="/lobby">🎮 Create / Join Game</Link>
+            </Button>
+          </div>
+        ) : (
+          <>
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
@@ -81,6 +94,8 @@ export default async function DashboardPage() {
               ))}
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>
