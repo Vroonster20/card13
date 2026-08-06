@@ -7,7 +7,7 @@ import { GameBoard } from '@/components/game/GameBoard';
 
 export default async function GamePage({ params }: { params: { gameId: string } }) {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/');
 
   const { gameId } = await params;
 

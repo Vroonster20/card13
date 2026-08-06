@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 
 export default async function StatsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/');
 
   const [stats, matchHistory] = await Promise.all([
     prisma.userStatistics.findUnique({ where: { userId: session.user.id } }),

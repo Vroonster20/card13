@@ -20,9 +20,4 @@ export async function POST() {
     userId: guest.id,
     name: guest.name,
   });
-
-  await signIn('guest', {
-    userId: guest.id,
-    redirect: false,
-  });
 }

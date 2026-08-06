@@ -6,10 +6,11 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 
 export default async function DashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/');
   const isGuest = session.user.isGuest;
 
   const userId = session.user.id;
@@ -27,8 +28,11 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 p-6">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-bold text-white">Welcome, {session.user.name}! 👋</h1>
+          <SignOutButton />
+        </div>
+        <div className="flex items-center justify-between mb-8">
           <p className="text-green-400 mt-1">Ready to play a round?</p>
         </div>
 
