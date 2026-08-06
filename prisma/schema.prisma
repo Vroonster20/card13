@@ -1,51 +1,30 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-//generator client {
-//  provider = "prisma-client"
-//  output   = "../src/generated/prisma"
-//}
-
-//datasource db {
-//  provider = "postgresql"
-//}
-
-//------------------------------------------------------------------------------------------
-//START BELOW!!!!!!!!!!!!!!!!!!!
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  //url       = env("postgresql://neondb_owner:npg_ckfpIKvZ5nm4@ep-weathered-bread-aqs5sp4u-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
-  //directUrl = env("postgresql://neondb_owner:npg_ckfpIKvZ5nm4@ep-weathered-bread-aqs5sp4u.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// ─────────────────────────────────────────────
-// AUTH MODELS (Auth.js / NextAuth compatible)
-// ─────────────────────────────────────────────
-
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String?         @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts     Account[]
-  sessions     Session[]
-  hostedGames  Game[]         @relation("GameHost")
-  gamePlayers  GamePlayer[]
-  lobbyPlayers LobbyPlayer[]
-  statistics   UserStatistics?
-  matchHistory MatchHistory[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  isGuest       Boolean         @default(false)
+  accounts      Account[]
+  gamePlayers   GamePlayer[]
+  hostedGames   Game[]          @relation("GameHost")
+  lobbyPlayers  LobbyPlayer[]
+  matchHistory  MatchHistory[]
+  sessions      Session[]
+  statistics    UserStatistics?
 
   @@map("users")
 }
@@ -56,15 +35,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -75,8 +53,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -90,21 +67,16 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// ─────────────────────────────────────────────
-// LOBBY MODELS
-// ─────────────────────────────────────────────
-
 model Lobby {
-  id         String      @id @default(cuid())
-  code       String      @unique
+  id         String        @id @default(cuid())
+  code       String        @unique
   hostId     String
-  status     LobbyStatus @default(WAITING)
-  maxPlayers Int         @default(7)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  players LobbyPlayer[]
-  game    Game?
+  status     LobbyStatus   @default(WAITING)
+  maxPlayers Int           @default(7)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  game       Game?
+  players    LobbyPlayer[]
 
   @@map("lobbies")
 }
@@ -116,64 +88,50 @@ model LobbyPlayer {
   isReady   Boolean  @default(false)
   seatIndex Int      @default(0)
   joinedAt  DateTime @default(now())
-
-  lobby Lobby @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lobby     Lobby    @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([lobbyId, userId])
   @@unique([lobbyId, seatIndex])
   @@map("lobby_players")
 }
 
-enum LobbyStatus {
-  WAITING
-  STARTING
-  IN_GAME
-  CLOSED
-}
-
-// ─────────────────────────────────────────────
-// GAME MODELS
-// ─────────────────────────────────────────────
-
 model Game {
-  id                String     @id @default(cuid())
-  lobbyId           String     @unique
+  id                String         @id @default(cuid())
+  lobbyId           String         @unique
   hostId            String
-  status            GameStatus @default(IN_PROGRESS)
-  currentRound      Int        @default(1)
+  status            GameStatus     @default(IN_PROGRESS)
+  currentRound      Int            @default(1)
   currentTurnUserId String?
-  drawPile          Json       @default("[]")
-  discardPile       Json       @default("[]")
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  drawPile          Json           @default("[]")
+  discardPile       Json           @default("[]")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   endedAt           DateTime?
-
-  lobby        Lobby        @relation(fields: [lobbyId], references: [id])
-  host         User         @relation("GameHost", fields: [hostId], references: [id])
-  players      GamePlayer[]
-  rounds       Round[]
-  matchHistory MatchHistory[]
+  players           GamePlayer[]
+  host              User           @relation("GameHost", fields: [hostId], references: [id])
+  lobby             Lobby          @relation(fields: [lobbyId], references: [id])
+  matchHistory      MatchHistory[]
+  rounds            Round[]
 
   @@map("games")
 }
 
 model GamePlayer {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   gameId         String
   userId         String
   seatIndex      Int
-  hand           Json      @default("[]")
-  isConnected    Boolean   @default(true)
+  hand           Json         @default("[]")
+  isConnected    Boolean      @default(true)
   disconnectedAt DateTime?
   finalScore     Int?
   finalRank      Int?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roundScores RoundScore[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  game           Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roundScores    RoundScore[]
 
   @@unique([gameId, userId])
   @@unique([gameId, seatIndex])
@@ -181,51 +139,34 @@ model GamePlayer {
 }
 
 model Round {
-  id          String      @id @default(cuid())
+  id          String       @id @default(cuid())
   gameId      String
   roundNumber Int
   wildRank    String
   cardsDealt  Int
-  status      RoundStatus @default(IN_PROGRESS)
-  startedAt   DateTime    @default(now())
+  status      RoundStatus  @default(IN_PROGRESS)
+  startedAt   DateTime     @default(now())
   endedAt     DateTime?
-
-  game   Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  scores RoundScore[]
+  scores      RoundScore[]
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, roundNumber])
   @@map("rounds")
 }
 
 model RoundScore {
-  id           String @id @default(cuid())
+  id           String     @id @default(cuid())
   roundId      String
   gamePlayerId String
   rawScore     Int
-  bonus        Int    @default(0)
+  bonus        Int        @default(0)
   totalScore   Int
-
-  round      Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  gamePlayer GamePlayer @relation(fields: [gamePlayerId], references: [id], onDelete: Cascade)
+  gamePlayer   GamePlayer @relation(fields: [gamePlayerId], references: [id], onDelete: Cascade)
+  round        Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
 
   @@unique([roundId, gamePlayerId])
   @@map("round_scores")
 }
-
-enum GameStatus {
-  IN_PROGRESS
-  COMPLETED
-  ABANDONED
-}
-
-enum RoundStatus {
-  IN_PROGRESS
-  COMPLETED
-}
-
-// ─────────────────────────────────────────────
-// STATISTICS MODELS
-// ─────────────────────────────────────────────
 
 model UserStatistics {
   id             String   @id @default(cuid())
@@ -239,8 +180,7 @@ model UserStatistics {
   currentStreak  Int      @default(0)
   longestStreak  Int      @default(0)
   updatedAt      DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_statistics")
 }
@@ -254,10 +194,26 @@ model MatchHistory {
   finalRank   Int
   rounds      Json     @default("[]")
   playedAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("match_history")
 }
 
+enum LobbyStatus {
+  WAITING
+  STARTING
+  IN_GAME
+  CLOSED
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum RoundStatus {
+  IN_PROGRESS
+  COMPLETED
+}
