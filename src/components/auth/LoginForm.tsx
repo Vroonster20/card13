@@ -28,7 +28,7 @@ export function LoginForm() {
 
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
-      setError(parsed.error.errors[0].message);
+      setError(parsed.error.issues[0].message);
       return;
     }
 
