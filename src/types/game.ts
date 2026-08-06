@@ -62,6 +62,7 @@ export interface ServerGameState {
   knockedBy?: string;
   isFinalTurnPhase: boolean;
   remainingFinalTurns: string[];
+  winner?: string;           // userId of winner when game ends
 }
 
 export interface ServerPlayer {
