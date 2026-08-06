@@ -1,0 +1,16 @@
+# .github/workflows/cleanup-guests.yml
+name: Cleanup guest accounts
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call cleanup endpoint
+        run: |
+          curl -f -X POST https://thirteen-jpfq.onrender.com/api/admin/cleanup-guests \
+            -H "x-admin-secret: ${{ secrets.ADMIN_CLEANUP_SECRET }}"
