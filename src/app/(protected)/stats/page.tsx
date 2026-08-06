@@ -4,22 +4,33 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
 
 export default async function StatsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/stats`, {
-    headers: { Cookie: '' }, // pass auth cookie server-side
-    cache: 'no-store',
-  });
-  const { stats, matchHistory } = res.ok ? await res.json() : { stats: null, matchHistory: [] };
+  const [stats, matchHistory] = await Promise.all([
+    prisma.userStatistics.findUnique({ where: { userId: session.user.id } }),
+    prisma.matchHistory.findMany({
+      where: { userId: session.user.id },
+      orderBy: { playedAt: 'desc' },
+      take: 20,
+    }),
+  ]);
+
+  const gamesPlayed = stats?.gamesPlayed ?? 0;
+  const gamesWon = stats?.gamesWon ?? 0;
+  const winPercentage = gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
+  const averageScore =
+    gamesPlayed > 0 ? Math.round((stats?.totalScore ?? 0) / gamesPlayed) : 0;
+
 
   const statCards = [
     { label: 'Games Played', value: stats?.gamesPlayed ?? 0, icon: '🎮' },
     { label: 'Games Won', value: stats?.gamesWon ?? 0, icon: '🏆' },
-    { label: 'Win Rate', value: `${stats?.winPercentage ?? 0}%`, icon: '📈' },
-    { label: 'Avg Score', value: stats?.averageScore ?? '—', icon: '📊' },
+    { label: 'Win Rate', value: `${winPercentage ?? 0}%`, icon: '📈' },
+    { label: 'Avg Score', value: averageScore ?? '—', icon: '📊' },
     { label: 'Best Score', value: stats?.lowestScore ?? '—', icon: '⭐' },
     { label: 'Worst Score', value: stats?.highestScore ?? '—', icon: '😅' },
     { label: 'Win Streak', value: stats?.currentStreak ?? 0, icon: '🔥' },
