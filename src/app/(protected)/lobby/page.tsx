@@ -53,7 +53,7 @@ export default function LobbyPage() {
           <Link href="/dashboard"><ArrowLeft className="w-4 h-4 mr-2" />Back</Link>
         </Button>
 
-        <h1 className="text-2xl font-bold text-white mb-6">Play Card 13</h1>
+        <h1 className="text-2xl font-bold text-white mb-6">Play Thirteen</h1>
 
         {mode === 'pick' && (
           <div className="space-y-3">

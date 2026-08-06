@@ -2,9 +2,11 @@
 // src/app/page.tsx — Landing Page
 // ─────────────────────────────────────────────
 import Link from 'next/link';
+import CardCycle from '@/components/game/CardCycle';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { AuthButtons } from '@/components/auth/AuthButtons';
+import logo from "./../../public/logo.png";
 
 export default async function HomePage() {
   const session = await auth();
@@ -13,10 +15,10 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-lg">
-        <div className="text-8xl mb-6 animate-bounce">🃏</div>
-        <h1 className="text-5xl font-extrabold text-white mb-4">Card 13</h1>
+        <img src={logo.src} alt="Thirteen Logo" className="mx-auto mb-6 w-132 h-52" />
+        <CardCycle />
         <p className="text-green-300 text-lg mb-8">
-          The classic card game with wilds, sets, and runs. Play with up to 7 friends online in real-time.
+          The card game with wilds, sets, and runs. Play with up to 7 friends online in real-time.
         </p>
         <AuthButtons />
         <div className="mt-12 grid grid-cols-3 gap-6 text-center">

@@ -11,7 +11,7 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Card 13 — Multiplayer Card Game',
+  title: 'Thirteen — Multiplayer Card Game',
   description: 'Play the card game "13" with up to 7 players online',
 };
 

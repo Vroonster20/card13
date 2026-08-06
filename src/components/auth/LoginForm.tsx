@@ -57,7 +57,7 @@ export function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🃏</div>
-          <h1 className="text-3xl font-bold text-white">Card 13</h1>
+          <h1 className="text-3xl font-bold text-white">Thirteen</h1>
           <p className="text-green-400 text-sm mt-1">Sign in to play</p>
         </div>
 

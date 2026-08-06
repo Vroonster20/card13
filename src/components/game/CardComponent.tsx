@@ -31,7 +31,7 @@ const SUIT_COLOR: Record<string, string> = {
   spades: 'text-black',
 };
 
-function getCardImage(card: Card): string {
+export function getCardImage(card: Card): string {
   const rankMap: Record<Rank, string> = {
     '2': '2',
     '3': '3',
@@ -104,23 +104,6 @@ export function CardComponent({
           WILD
         </div>
       )}
-
-      {/* Top left rank + suit */}
-      {/* <div className={cn('text-xs font-bold leading-none', SUIT_COLOR[card.suit])}>
-        <div>{card.rank}</div>
-        <div>{SUIT_SYMBOL[card.suit]}</div>
-      </div> */}
-
-      {/* Center suit symbol */}
-      {/* <div className={cn('text-2xl self-center', SUIT_COLOR[card.suit])}>
-        {SUIT_SYMBOL[card.suit]}
-      </div> */}
-
-      {/* Bottom right rank + suit (rotated) */}
-      {/* <div className={cn('text-xs font-bold leading-none self-end rotate-180', SUIT_COLOR[card.suit])}>
-        <div>{card.rank}</div>
-        <div>{SUIT_SYMBOL[card.suit]}</div>
-      </div> */}
 
       <Image
         src={getCardImage(card)}

@@ -63,7 +63,7 @@ export function RegisterForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🃏</div>
-          <h1 className="text-3xl font-bold text-white">Join Card 13</h1>
+          <h1 className="text-3xl font-bold text-white">Join Thirteen</h1>
           <p className="text-green-400 text-sm mt-1">Create your account</p>
         </div>
 
