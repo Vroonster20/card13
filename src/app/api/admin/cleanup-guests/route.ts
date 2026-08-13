@@ -14,6 +14,9 @@ export async function POST(req: Request) {
       createdAt: {
         lt: new Date(Date.now() - 24 * 60 * 60 * 1000),
       },
+      hostedGames: {
+        none: {},
+      },
     },
   });
 
