@@ -8,19 +8,58 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await prisma.user.deleteMany({
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+
+  const guests = await prisma.user.findMany({
     where: {
       isGuest: true,
       createdAt: {
-        lt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-      hostedGames: {
-        none: {},
+        lt: cutoff,
       },
     },
+    include: {
+      hostedGames: {
+        include: {
+          players: {
+            include: {
+              user: true,
+            },
+          }
+        }
+      }
+    }
   });
 
-  return NextResponse.json({
-    deleted: result.count,
-  });
+  let deletedGuests = 0;
+  let transferredGames = 0;
+  let deletedGames = 0;
+
+  for (const guest of guests) {
+    await prisma.$transaction(async (tx) => {
+      for (const game of guest.hostedGames) {
+        const newHost = game.players.find(player => !player.user.isGuest);
+
+        if (newHost) {
+          await tx.game.update({
+            where: { id: game.id },
+            data: { hostId: newHost.userId },
+          });
+          transferredGames++;
+        }
+        else {
+          await tx.game.delete({
+            where: { id: game.id },
+          });
+          deletedGames++;
+        }
+      }
+
+      await tx.user.delete({
+        where: { id: guest.id },
+      });
+      deletedGuests++;
+    });
+  }
+
+  return NextResponse.json({ deletedGuests, transferredGames, deletedGames });
 }
